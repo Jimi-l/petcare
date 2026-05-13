@@ -269,13 +269,40 @@ function InteriorCarousel() {
 }
 
 function BookingForm() {
-  const [showToast, setShowToast] = useState(false);
+  const [feedback, setFeedback] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setShowToast(true);
-    event.currentTarget.reset();
-    window.setTimeout(() => setShowToast(false), 4200);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const payload = Object.fromEntries(formData.entries());
+
+    setIsSubmitting(true);
+    setFeedback("");
+
+    try {
+      const response = await fetch("/api/bookings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+      const result = (await response.json()) as { message?: string };
+
+      if (!response.ok) {
+        throw new Error(result.message || "预约提交失败，请稍后再试。");
+      }
+
+      setFeedback(result.message || "预约信息已提交，稍后护理顾问会与你确认具体时段。");
+      form.reset();
+      window.setTimeout(() => setFeedback(""), 4200);
+    } catch (error) {
+      setFeedback(error instanceof Error ? error.message : "预约提交失败，请稍后再试。");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const inputClass =
@@ -364,19 +391,20 @@ function BookingForm() {
       </div>
       <div className="mt-5 flex flex-wrap items-center gap-4 max-sm:flex-col max-sm:items-stretch">
         <button
-          className="inline-flex min-h-[46px] cursor-pointer items-center justify-center rounded-lg border-0 bg-coral px-[18px] py-3 font-extrabold text-white shadow-[0_16px_34px_rgba(236,111,95,0.32)] transition hover:-translate-y-0.5"
+          className="inline-flex min-h-[46px] cursor-pointer items-center justify-center rounded-lg border-0 bg-coral px-[18px] py-3 font-extrabold text-white shadow-[0_16px_34px_rgba(236,111,95,0.32)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0"
+          disabled={isSubmitting}
           type="submit"
         >
-          提交预约
+          {isSubmitting ? "提交中..." : "提交预约"}
         </button>
         <span className="text-sm text-muted">不会自动扣费，到店确认后再开始服务。</span>
       </div>
-      {showToast && (
+      {feedback && (
         <div
           className="mt-4 rounded-lg bg-mint px-3.5 py-3 font-bold text-teal-dark"
           role="status"
         >
-          预约信息已记录，稍后护理顾问会与你确认具体时段。
+          {feedback}
         </div>
       )}
     </form>
