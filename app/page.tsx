@@ -310,6 +310,16 @@ function BookingForm() {
           />
         </label>
         <label className={labelClass}>
+          联系邮箱
+          <input
+            className={inputClass}
+            name="email"
+            type="email"
+            autoComplete="email"
+            placeholder="用于接收预约确认"
+          />
+        </label>
+        <label className={labelClass}>
           宠物类型
           <select className={inputClass} name="pet" required defaultValue="">
             <option value="">请选择</option>
